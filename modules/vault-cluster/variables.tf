@@ -99,7 +99,8 @@ variable "enable_security_group_setup" {
 
 variable "security_group_id" {
   description = "A security group ID to add to Vault EC2 Instances instead of the one created by default"
-  default     = ""
+  type        = string
+  default     = null
 }
 
 variable "security_group_tags" {
