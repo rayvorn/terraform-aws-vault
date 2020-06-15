@@ -165,7 +165,7 @@ resource "aws_security_group" "lc_security_group" {
 }
 
 resource "aws_security_group_rule" "allow_ssh_inbound_from_cidr_blocks" {
-  count       = length(var.allowed_ssh_cidr_blocks) >= 1 && var.enable_security_group_setup ? 1 : 0
+  count       = var.enable_security_group_setup && length(var.allowed_ssh_cidr_blocks) >= 1  ? 1 : 0
   type        = "ingress"
   from_port   = var.ssh_port
   to_port     = var.ssh_port
@@ -176,7 +176,7 @@ resource "aws_security_group_rule" "allow_ssh_inbound_from_cidr_blocks" {
 }
 
 resource "aws_security_group_rule" "allow_ssh_inbound_from_security_group_ids" {
-  count                    = length(var.allowed_ssh_cidr_blocks) >= 1 && var.enable_security_group_setup ? length(var.allowed_ssh_security_group_ids) : 0
+  count                    = var.enable_security_group_setup && length(var.allowed_ssh_cidr_blocks) >= 1  ? length(var.allowed_ssh_security_group_ids) : 0
   type                     = "ingress"
   from_port                = var.ssh_port
   to_port                  = var.ssh_port
