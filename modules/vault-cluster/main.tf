@@ -102,7 +102,7 @@ resource "aws_launch_configuration" "launch_configuration" {
   instance_type = var.instance_type
   user_data     = var.user_data
 
-  iam_instance_profile = aws_iam_instance_profile.instance_profile.name
+  iam_instance_profile = var.iam_instance_profile ? var.iam_instance_profile : aws_iam_instance_profile.instance_profile.name
   key_name             = var.ssh_key_name
   # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
   # force an interpolation expression to be interpreted as a list by wrapping it
@@ -113,7 +113,7 @@ resource "aws_launch_configuration" "launch_configuration" {
   # brackets to avoid interpretation as a list of lists. If the expression
   # returns a single list item then leave it as-is and remove this TODO comment.
   security_groups = concat(
-    [aws_security_group.lc_security_group.id],
+    var.security_group_id ? [var.security_group_id] : [aws_security_group.lc_security_group.id],
     var.additional_security_group_ids,
   )
   placement_tenancy           = var.tenancy
@@ -144,6 +144,7 @@ resource "aws_launch_configuration" "launch_configuration" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_security_group" "lc_security_group" {
+  count       = var.security_group_id ? 1 : 0
   name_prefix = var.cluster_name
   description = "Security group for the ${var.cluster_name} launch configuration"
   vpc_id      = var.vpc_id
@@ -164,7 +165,7 @@ resource "aws_security_group" "lc_security_group" {
 }
 
 resource "aws_security_group_rule" "allow_ssh_inbound_from_cidr_blocks" {
-  count       = length(var.allowed_ssh_cidr_blocks) >= 1 ? 1 : 0
+  count       = length(var.allowed_ssh_cidr_blocks) >= 1 && var.security_group_id ? 1 : 0
   type        = "ingress"
   from_port   = var.ssh_port
   to_port     = var.ssh_port
@@ -175,7 +176,7 @@ resource "aws_security_group_rule" "allow_ssh_inbound_from_cidr_blocks" {
 }
 
 resource "aws_security_group_rule" "allow_ssh_inbound_from_security_group_ids" {
-  count                    = length(var.allowed_ssh_security_group_ids)
+  count                    = length(var.allowed_ssh_cidr_blocks) >= 1 && var.security_group_id ? length(var.allowed_ssh_security_group_ids) : 0
   type                     = "ingress"
   from_port                = var.ssh_port
   to_port                  = var.ssh_port
@@ -186,6 +187,7 @@ resource "aws_security_group_rule" "allow_ssh_inbound_from_security_group_ids" {
 }
 
 resource "aws_security_group_rule" "allow_all_outbound" {
+  count       = var.security_group_id ? 1 : 0
   type        = "egress"
   from_port   = 0
   to_port     = 0
@@ -200,6 +202,7 @@ resource "aws_security_group_rule" "allow_all_outbound" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 module "security_group_rules" {
+  enable_rules  = var.security_group_id ? true : false
   source = "../vault-security-group-rules"
 
   security_group_id                    = aws_security_group.lc_security_group.id
@@ -218,6 +221,7 @@ module "security_group_rules" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_instance_profile" "instance_profile" {
+  count       = var.iam_instance_profile ? 1 : 0
   name_prefix = var.cluster_name
   path        = var.instance_profile_path
   role        = aws_iam_role.instance_role.name
@@ -231,6 +235,7 @@ resource "aws_iam_instance_profile" "instance_profile" {
 }
 
 resource "aws_iam_role" "instance_role" {
+  count              = var.iam_instance_profile ? 1 : 0
   name_prefix        = var.cluster_name
   assume_role_policy = data.aws_iam_policy_document.instance_role.json
 

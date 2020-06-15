@@ -91,6 +91,11 @@ variable "additional_security_group_ids" {
   default     = []
 }
 
+variable "security_group_id" {
+  description = "A security group ID to add to Vault EC2 Instances instead of the one created by default"
+  default     = ""
+}
+
 variable "security_group_tags" {
   description = "Tags to be applied to the LC security group"
   type        = map(string)
@@ -170,6 +175,11 @@ variable "health_check_grace_period" {
 variable "instance_profile_path" {
   description = "Path in which to create the IAM instance profile."
   default     = "/"
+}
+
+variable "iam_instance_profile" {
+  description = "Profile to use instead of the created default."
+  default     = ""
 }
 
 variable "api_port" {
