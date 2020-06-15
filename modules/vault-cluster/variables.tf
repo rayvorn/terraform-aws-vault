@@ -91,6 +91,12 @@ variable "additional_security_group_ids" {
   default     = []
 }
 
+variable "enable_security_group_setup" {
+  description = "If true, create the security group and attached rules. If false, these will not be created, and you can pass in your own security group ID via var.security_group_id and var.additional_security_group_ids."
+  type        = bool
+  default     = true
+}
+
 variable "security_group_id" {
   description = "A security group ID to add to Vault EC2 Instances instead of the one created by default"
   default     = ""
@@ -177,9 +183,16 @@ variable "instance_profile_path" {
   default     = "/"
 }
 
-variable "iam_instance_profile" {
+variable "enable_iam_setup" {
+  description = "If true, create the IAM Role, IAM Instance Profile, and IAM Policies. If false, these will not be created, and you can pass in your own IAM Instance Profile via var.iam_instance_profile_name."
+  type        = bool
+  default     = true
+}
+
+variable "iam_instance_profile_name" {
   description = "Profile to use instead of the created default."
-  default     = ""
+  type        = string
+  default     = null
 }
 
 variable "api_port" {
