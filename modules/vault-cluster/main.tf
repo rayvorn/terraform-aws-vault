@@ -202,8 +202,8 @@ resource "aws_security_group_rule" "allow_all_outbound" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 module "security_group_rules" {
-  enable_rules  = var.enable_security_group_setup
   source = "../vault-security-group-rules"
+  enable_rules = var.enable_security_group_setup
 
   security_group_id                    = aws_security_group.lc_security_group.id
   allowed_inbound_cidr_blocks          = var.allowed_inbound_cidr_blocks
