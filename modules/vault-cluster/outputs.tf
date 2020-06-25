@@ -19,19 +19,23 @@ output "launch_config_name" {
 }
 
 output "iam_role_arn" {
-  value = aws_iam_role.instance_role.arn
+  value = element(concat(aws_iam_role.instance_role.*.arn, [""]), 0)
+  description = "This is the arn of instance role if enable_iam_setup variable is set to true"
 }
 
 output "iam_role_id" {
-  value = aws_iam_role.instance_role.id
+  value = element(concat(aws_iam_role.instance_role.*.id, [""]), 0)
+  description = "This is the id of instance role if enable_iam_setup variable is set to true"
 }
 
 output "iam_role_name" {
-  value = aws_iam_role.instance_role.name
+  value = element(concat(aws_iam_role.instance_role.*.name, [""]), 0)
+  description = "This is the name of instance role if enable_iam_setup variable is set to true"
 }
 
 output "security_group_id" {
-  value = aws_security_group.lc_security_group.id
+  value = element(concat(aws_security_group.lc_security_group.*.id, [""]), 0)
+  description = "This is the id of security group that governs ingress and egress for the vault instances if enable_security_groups is set to true"
 }
 
 output "s3_bucket_arn" {

@@ -102,7 +102,10 @@ resource "aws_launch_configuration" "launch_configuration" {
   instance_type = var.instance_type
   user_data     = var.user_data
 
-  iam_instance_profile = var.enable_iam_setup ? aws_iam_instance_profile.instance_profile.name :  var.iam_instance_profile_name
+  iam_instance_profile = var.enable_iam_setup ? element(
+    concat(aws_iam_instance_profile.instance_profile.*.name, [""]),
+    0,
+  ) : var.iam_instance_profile_name
   key_name             = var.ssh_key_name
   # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
   # force an interpolation expression to be interpreted as a list by wrapping it
@@ -113,7 +116,7 @@ resource "aws_launch_configuration" "launch_configuration" {
   # brackets to avoid interpretation as a list of lists. If the expression
   # returns a single list item then leave it as-is and remove this TODO comment.
   security_groups = concat(
-    var.enable_security_group_setup ? [aws_security_group.lc_security_group.id] : [var.security_group_id],
+    var.enable_security_group_setup ? aws_security_group.lc_security_group.*.id : [var.security_group_id],
     var.additional_security_group_ids,
   )
   placement_tenancy           = var.tenancy
@@ -172,7 +175,7 @@ resource "aws_security_group_rule" "allow_ssh_inbound_from_cidr_blocks" {
   protocol    = "tcp"
   cidr_blocks = var.allowed_ssh_cidr_blocks
 
-  security_group_id = aws_security_group.lc_security_group.id
+  security_group_id = element(concat(aws_security_group.lc_security_group.*.id, [""]), 0)
 }
 
 resource "aws_security_group_rule" "allow_ssh_inbound_from_security_group_ids" {
@@ -183,7 +186,7 @@ resource "aws_security_group_rule" "allow_ssh_inbound_from_security_group_ids" {
   protocol                 = "tcp"
   source_security_group_id = element(var.allowed_ssh_security_group_ids, count.index)
 
-  security_group_id = aws_security_group.lc_security_group.id
+  security_group_id = element(concat(aws_security_group.lc_security_group.*.id, [""]), 0)
 }
 
 resource "aws_security_group_rule" "allow_all_outbound" {
@@ -194,7 +197,7 @@ resource "aws_security_group_rule" "allow_all_outbound" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = aws_security_group.lc_security_group.id
+  security_group_id = element(concat(aws_security_group.lc_security_group.*.id, [""]), 0)
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -205,7 +208,7 @@ module "security_group_rules" {
   source = "../vault-security-group-rules"
   enable_rules = var.enable_security_group_setup
 
-  security_group_id                    = aws_security_group.lc_security_group.id
+  security_group_id                    = element(concat(aws_security_group.lc_security_group.*.id, [""]), 0)
   allowed_inbound_cidr_blocks          = var.allowed_inbound_cidr_blocks
   allowed_inbound_security_group_ids   = var.allowed_inbound_security_group_ids
   allowed_inbound_security_group_count = var.allowed_inbound_security_group_count
@@ -224,7 +227,7 @@ resource "aws_iam_instance_profile" "instance_profile" {
   count       = var.enable_iam_setup ? 1 : 0
   name_prefix = var.cluster_name
   path        = var.instance_profile_path
-  role        = aws_iam_role.instance_role.name
+  role        = element(concat(aws_iam_role.instance_role.*.id, [""]), 0)
 
   # aws_launch_configuration.launch_configuration in this module sets create_before_destroy to true, which means
   # everything it depends on, including this resource, must set it as well, or you'll get cyclic dependency errors
@@ -286,7 +289,7 @@ resource "aws_s3_bucket" "vault_storage" {
 resource "aws_iam_role_policy" "vault_s3" {
   count = var.enable_s3_backend ? 1 : 0
   name  = "vault_s3"
-  role  = aws_iam_role.instance_role.id
+  role  = element(concat(aws_iam_role.instance_role.*.id, [""]), 0)
   policy = element(
     concat(data.aws_iam_policy_document.vault_s3.*.json, [""]),
     0,
@@ -350,7 +353,7 @@ data "aws_iam_policy_document" "vault_dynamo" {
 resource "aws_iam_role_policy" "vault_dynamo" {
   count  = var.enable_dynamo_backend ? 1 : 0
   name   = "vault_dynamo"
-  role   = aws_iam_role.instance_role.id
+  role   = element(concat(aws_iam_role.instance_role.*.id, [""]), 0)
   policy = element(
     concat(data.aws_iam_policy_document.vault_dynamo.*.json, [""]),
     0,
@@ -376,7 +379,7 @@ data "aws_iam_policy_document" "vault_auto_unseal_kms" {
 resource "aws_iam_role_policy" "vault_auto_unseal_kms" {
   count = var.enable_auto_unseal ? 1 : 0
   name  = "vault_auto_unseal_kms"
-  role  = aws_iam_role.instance_role.id
+  role  = element(concat(aws_iam_role.instance_role.*.id, [""]), 0)
   policy = element(
     concat(
       data.aws_iam_policy_document.vault_auto_unseal_kms.*.json,
