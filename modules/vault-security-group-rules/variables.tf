@@ -36,3 +36,8 @@ variable "cluster_port" {
   default     = 8201
 }
 
+variable "enable_rules" {
+  description = "Whether to use additional rules."
+  type        = bool
+  default     = true
+}

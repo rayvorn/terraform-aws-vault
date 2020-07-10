@@ -3,7 +3,7 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_security_group_rule" "allow_api_inbound_from_cidr_blocks" {
-  count       = length(var.allowed_inbound_cidr_blocks) >= 1 ? 1 : 0
+  count       = var.enable_rules && length(var.allowed_inbound_cidr_blocks) >= 1  ? 1 : 0
   type        = "ingress"
   from_port   = var.api_port
   to_port     = var.api_port
@@ -14,7 +14,7 @@ resource "aws_security_group_rule" "allow_api_inbound_from_cidr_blocks" {
 }
 
 resource "aws_security_group_rule" "allow_api_inbound_from_security_group_ids" {
-  count                    = var.allowed_inbound_security_group_count
+  count                    = var.enable_rules ? var.allowed_inbound_security_group_count : 0
   type                     = "ingress"
   from_port                = var.api_port
   to_port                  = var.api_port
@@ -25,6 +25,7 @@ resource "aws_security_group_rule" "allow_api_inbound_from_security_group_ids" {
 }
 
 resource "aws_security_group_rule" "allow_cluster_inbound_from_self" {
+  count     = var.enable_rules ? 1 : 0
   type      = "ingress"
   from_port = var.cluster_port
   to_port   = var.cluster_port
@@ -35,6 +36,7 @@ resource "aws_security_group_rule" "allow_cluster_inbound_from_self" {
 }
 
 resource "aws_security_group_rule" "allow_cluster_inbound_from_self_api" {
+  count     = var.enable_rules ? 1 : 0
   type      = "ingress"
   from_port = var.api_port
   to_port   = var.api_port
